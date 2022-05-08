@@ -866,17 +866,17 @@ static int bb_ui_draw_measure(UIState *s, const char* bb_value, const char* bb_u
     // nvgFontFace(s->vg, "sans-semibold");
     // nvgFontSize(s->vg, bb_valueFontSize*0.8);
     // nvgFillColor(s->vg, bb_valueColor);
-    // nvgText(s->vg, bb_x-dx/2-20, bb_y+ (int)(bb_valueFontSize*2.5)+5-20, bb_value, NULL);
+    // nvgText(s->vg, bb_x-dx/2, bb_y+ (int)(bb_valueFontSize*2.0)+5 + (int)(bb_labelFontSize*2.0)+25, bb_value, NULL);
     //print label
     nvgFontFace(s->vg, "sans-regular");
     nvgFontSize(s->vg, bb_labelFontSize*2.5);
     nvgFillColor(s->vg, bb_labelColor);
-    nvgText(s->vg, bb_x, bb_y + (int)(bb_valueFontSize*2.5)+5 + (int)(bb_labelFontSize*2.5)+5, bb_label, NULL);
+    nvgText(s->vg, bb_x, bb_y + (int)(bb_valueFontSize*2.0)+5, bb_label, NULL);
     //print uom
     if (strlen(bb_uom) > 0) {
         nvgSave(s->vg);
       int rx =bb_x + bb_uom_dx + bb_valueFontSize -3;
-      int ry = bb_y + (int)(bb_valueFontSize*2.5/2)+25;
+      int ry = bb_y + (int)(bb_valueFontSize*2.0/2) + (int)(bb_labelFontSize*2.0)+5+25;
       nvgTranslate(s->vg,rx,ry);
       nvgRotate(s->vg, -1.5708); //-90deg in radians
       nvgFontFace(s->vg, "sans-regular");
@@ -890,21 +890,21 @@ static int bb_ui_draw_measure(UIState *s, const char* bb_value, const char* bb_u
     if (strlen(bb_uom) > 0) {
       dx = (int)(bb_uomFontSize*2.5/2);
     }
-    //print value
-    nvgFontFace(s->vg, "sans-semibold");
-    nvgFontSize(s->vg, bb_valueFontSize*2.5);
-    nvgFillColor(s->vg, bb_valueColor);
-    nvgText(s->vg, bb_x-dx/2, bb_y+ (int)(bb_valueFontSize*2.5)+5, bb_value, NULL);
     //print label
     nvgFontFace(s->vg, "sans-regular");
     nvgFontSize(s->vg, bb_labelFontSize*2.5);
     nvgFillColor(s->vg, bb_labelColor);
-    nvgText(s->vg, bb_x, bb_y + (int)(bb_valueFontSize*2.5)+5 + (int)(bb_labelFontSize*2.5)+5, bb_label, NULL);
+    nvgText(s->vg, bb_x, bb_y + (int)(bb_valueFontSize*2.0)+5, bb_label, NULL);
+    //print value
+    nvgFontFace(s->vg, "sans-semibold");
+    nvgFontSize(s->vg, bb_valueFontSize*2.5);
+    nvgFillColor(s->vg, bb_valueColor);
+    nvgText(s->vg, bb_x-dx/2, bb_y+ (int)(bb_valueFontSize*2.0)+5 + (int)(bb_labelFontSize*2.0)+25, bb_value, NULL);
     //print uom
     if (strlen(bb_uom) > 0) {
         nvgSave(s->vg);
       int rx =bb_x + bb_uom_dx + bb_valueFontSize -3;
-      int ry = bb_y + (int)(bb_valueFontSize*2.5/2)+25;
+      int ry = bb_y + (int)(bb_valueFontSize*2.0/2) + (int)(bb_labelFontSize*2.0)+5+25;
       nvgTranslate(s->vg,rx,ry);
       nvgRotate(s->vg, -1.5708); //-90deg in radians
       nvgFontFace(s->vg, "sans-regular");
@@ -1045,6 +1045,56 @@ static void bb_ui_draw_measures_right(UIState *s, int bb_x, int bb_y, int bb_w )
         value_fontSize, label_fontSize, uom_fontSize, 0);
   }
 
+  //add gear step & gap 
+  if (0 < scene.gear_step && scene.gear_step < 9) {
+    //char val_str[16];
+    //char uom_str[6];
+    std::string trans_gear_val = "D " + std::to_string(int(scene.gear_step));
+    std::string gap = "";
+    NVGcolor val_color = COLOR_YELLOW_ALPHA(200);
+    NVGcolor uom_color2 = COLOR_BLUE_ALPHA(200);
+    if (scene.cruise_gap == 1) {
+      uom_color2 = COLOR_RED_ALPHA(240);
+      gap = "■";
+    } else if (scene.cruise_gap == 2) {
+      uom_color2 = COLOR_OCHRE_ALPHA(220);
+      gap = "■■";
+    } else if (scene.cruise_gap == 3) {
+      uom_color2 = COLOR_GREEN_ALPHA(200);
+      gap = "■■■";
+    } else {
+      gap = "■■■■";
+    }
+    bb_ry +=bb_ui_draw_measure(s, trans_gear_val.c_str(), gap.c_str(), "GEAR",
+        bb_rx, bb_ry, bb_uom_dx,
+        val_color, lab_color, uom_color2,
+        value_fontSize, label_fontSize, uom_fontSize, 2);
+  }
+
+  //add engine_rpm
+  if (scene.engine_rpm < 9998) {
+    char val_str[16];
+    char uom_str[6];
+    NVGcolor val_color = COLOR_WHITE_ALPHA(200);
+    if(scene.engine_rpm == 0) {
+       snprintf(val_str, sizeof(val_str), "OFF");
+    } else {
+      if(scene.engine_rpm > 3000) {
+        val_color = COLOR_RED_ALPHA(200);
+      } else if(scene.engine_rpm > 2000) {
+        val_color = COLOR_ORANGE_ALPHA(200);
+      } else {
+        val_color = COLOR_GREEN_ALPHA(200);
+      }
+      snprintf(val_str, sizeof(val_str), "%.0f", (scene.engine_rpm));
+    }    
+    snprintf(uom_str, sizeof(uom_str), "rpm");
+    bb_ry +=bb_ui_draw_measure(s, val_str, uom_str, "ENG RPM",
+        bb_rx, bb_ry, bb_uom_dx,
+        val_color, lab_color, uom_color,
+        value_fontSize, label_fontSize, uom_fontSize, false);
+  }
+
   //finally draw the frame
   nvgBeginPath(s->vg);
   nvgRoundedRect(s->vg, bb_x, bb_y, bb_w, bb_ry - bb_y + 45, 20);
@@ -1166,73 +1216,6 @@ static void bb_ui_draw_measures_left(UIState *s, int bb_x, int bb_y, int bb_w ) 
         value_fontSize, label_fontSize, uom_fontSize, 0);
   }
 
-  // //engine rpm
-  // if (scene.engine_rpm < 9998) {
-  //   //char val_str[16];
-  //   char uom_str[6];
-  //   std::string engine_rpm_val = std::to_string(int(scene.engine_rpm));
-  //   NVGcolor val_color = COLOR_WHITE_ALPHA(200);
-  //   if(scene.engine_rpm > 2500) {
-  //     val_color = nvgRGBA(255, 188, 3, 200);
-  //   }
-  //   if(scene.engine_rpm > 3500) {
-  //     val_color = nvgRGBA(255, 0, 0, 200);
-  //   }
-  //   snprintf(uom_str, sizeof(uom_str), "%d", scene.gear_step);
-  //   bb_ry +=bb_ui_draw_measure(s, engine_rpm_val.c_str(), uom_str, "ENG RPM",
-  //       bb_rx, bb_ry, bb_uom_dx,
-  //       val_color, lab_color, uom_color,
-  //       value_fontSize, label_fontSize, uom_fontSize, 1);
-  // }
-
-  // //cruise gap
-  // if (scene.longitudinal_control && scene.radar_long_helper < 2) {
-  //   char val_str[16];
-  //   char uom_str[6];
-  //   NVGcolor val_color = COLOR_WHITE_ALPHA(200);
-  //   if (scene.controls_state.getEnabled()) {
-  //     if (scene.cruise_gap == scene.dynamic_tr_mode) {
-  //       snprintf(val_str, sizeof(val_str), "AUT");
-  //       snprintf(uom_str, sizeof(uom_str), "%.2f",(scene.dynamic_tr_value));
-  //     } else {
-  //       snprintf(val_str, sizeof(val_str), "%d",(scene.cruise_gap));
-  //       snprintf(uom_str, sizeof(uom_str), "S");
-  //     }
-  //   } else {
-  //     snprintf(val_str, sizeof(val_str), "-");
-  //     snprintf(uom_str, sizeof(uom_str), "");
-  //   }
-  //   bb_ry +=bb_ui_draw_measure(s, val_str, uom_str, "Cruise Gap",
-  //       bb_rx, bb_ry, bb_uom_dx,
-  //       val_color, lab_color, uom_color,
-  //       value_fontSize, label_fontSize, uom_fontSize, 0);
-  // }
-
-  if (0 < scene.gear_step && scene.gear_step < 9) {
-    //char val_str[16];
-    //char uom_str[6];
-    std::string trans_gear_val = "S " + std::to_string(int(scene.gear_step));
-    std::string gap = "";
-    NVGcolor val_color = COLOR_YELLOW_ALPHA(200);
-    NVGcolor uom_color2 = COLOR_WHITE_ALPHA(200);
-    if (scene.cruise_gap == 1) {
-      uom_color2 = COLOR_RED_ALPHA(240);
-      gap = "■";
-    } else if (scene.cruise_gap == 2) {
-      uom_color2 = COLOR_OCHRE_ALPHA(220);
-      gap = "■■";
-    } else if (scene.cruise_gap == 3) {
-      uom_color2 = COLOR_GREEN_ALPHA(200);
-      gap = "■■■";
-    } else {
-      gap = "■■■■";
-    }
-    bb_ry +=bb_ui_draw_measure(s, trans_gear_val.c_str(), gap.c_str(), "GEAR",
-        bb_rx, bb_ry, bb_uom_dx,
-        val_color, lab_color, uom_color2,
-        value_fontSize, label_fontSize, uom_fontSize, 2);
-  }
-
   //finally draw the frame
   nvgBeginPath(s->vg);
   nvgRoundedRect(s->vg, bb_x, bb_y, bb_w, bb_ry - bb_y + 45, 20);
@@ -1298,7 +1281,7 @@ static void draw_safetysign(UIState *s) {
       } else if (safety_dist < 10000) {
         snprintf(safetyDist, sizeof(safetyDist), "%.2fkm", safety_dist/1000);
       } else {
-        snprintf(safetyDist, sizeof(safetyDist), "%.1fkm", safety_dist/10000);
+        snprintf(safetyDist, sizeof(safetyDist), "%.1fkm", safety_dist/1000);
       }
       opacity = safety_dist>600 ? 0 : (600 - safety_dist) * 0.425;
     } else {
@@ -1307,7 +1290,7 @@ static void draw_safetysign(UIState *s) {
       } else if (safety_dist < 10000) {
         snprintf(safetyDist, sizeof(safetyDist), "%.2fmi", safety_dist/1000);
       } else {
-        snprintf(safetyDist, sizeof(safetyDist), "%.1fmi", safety_dist/10000);
+        snprintf(safetyDist, sizeof(safetyDist), "%.1fmi", safety_dist/1000);
       }
       opacity = safety_dist>600 ? 0 : (600 - safety_dist) * 0.425;
     }
