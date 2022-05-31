@@ -554,7 +554,9 @@ EVENTS: Dict[int, Dict[str, Union[Alert, AlertCallbackType]]] = {
 
   # Camera is not outputting frames at a constant framerate
   EventName.cameraMalfunction: {
-    ET.PERMANENT: NormalPermanentAlert("Camera Malfunction", "Contact Support"),
+    ET.PERMANENT: NormalPermanentAlert("Camera Malfunction", "Likely Hardware Issue"),
+    ET.SOFT_DISABLE: soft_disable_alert("Camera Malfunction"),
+    ET.NO_ENTRY: NoEntryAlert("Camera Malfunction: Reboot Your Device"),    
   },
 
   # Unused
@@ -821,6 +823,7 @@ EVENTS: Dict[int, Dict[str, Union[Alert, AlertCallbackType]]] = {
   # Thrown when manager detects a service exited unexpectedly while driving
   EventName.processNotRunning: {
     ET.NO_ENTRY: NoEntryAlert("System Malfunction: Reboot Your Device"),
+    ET.SOFT_DISABLE: soft_disable_alert("Process Not Running"),
   },
 
   EventName.radarFault: {
@@ -995,8 +998,22 @@ EVENTS: Dict[int, Dict[str, Union[Alert, AlertCallbackType]]] = {
   },
 
   EventName.lkasDisabled: {
-    ET.PERMANENT: NormalPermanentAlert("LKAS Disabled: Enable LKAS to engage"),
-    ET.NO_ENTRY: NoEntryAlert("LKAS Disabled"),
+    # ET.PERMANENT: NormalPermanentAlert("LKAS Disabled: Enable LKAS to engage"),
+    # ET.NO_ENTRY: NoEntryAlert("LKAS Disabled"),
+    ET.WARNING: Alert(
+      "LKAS is Off status",
+      "",
+      AlertStatus.normal, AlertSize.small,
+      Priority.LOW, VisualAlert.none, AudibleAlert.disengage, 1., alert_rate=0.5),
   },
 
+  EventName.lkasEnabled: {
+    # ET.PERMANENT: NormalPermanentAlert("LKAS Disabled: Enable LKAS to engage"),
+    # ET.NO_ENTRY: NoEntryAlert("LKAS Disabled"),
+    ET.WARNING: Alert(
+      "LKAS turned On",
+      "",
+      AlertStatus.normal, AlertSize.small,
+      Priority.LOW, VisualAlert.none, AudibleAlert.engage, 1.),
+  },
 }

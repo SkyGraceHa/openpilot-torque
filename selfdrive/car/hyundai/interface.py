@@ -78,11 +78,11 @@ class CarInterface(CarInterfaceBase):
     ret.vCruisekph = 0
     ret.resSpeed = 0
     ret.vFuture = 0
+    ret.vFutureA = 0
     ret.aqValue = 0
     ret.aqValueRaw = 0
 
     params = Params()
-    ret.torqueMaxSpeed = float( params.get("TorqueMaxSpeed", encoding="utf8") ) * CV.KPH_TO_MS
     tire_stiffness_factor = float(Decimal(params.get("TireStiffnessFactorAdj", encoding="utf8")) * Decimal('0.01'))
     ret.steerActuatorDelay = float(Decimal(params.get("SteerActuatorDelayAdj", encoding="utf8")) * Decimal('0.01'))
     ret.steerRateCost = float(Decimal(params.get("SteerRateCostAdj", encoding="utf8")) * Decimal('0.01'))
@@ -342,8 +342,8 @@ class CarInterface(CarInterfaceBase):
       events.add(EventName.curvSpeedDown)
     if self.CC.autohold_popup_timer:
       events.add(EventName.brakeHold)
-    # if self.CC.auto_res_starting:
-    #   events.add(EventName.resCruise)
+    if self.CC.auto_res_starting:
+      events.add(EventName.resCruise)
     if self.CS.cruiseState_standstill or self.CC.standstill_status == 1:
       #events.add(EventName.standStill)
       self.CP.standStill = True
@@ -361,6 +361,10 @@ class CarInterface(CarInterfaceBase):
       self.CP.vFuture = self.CC.vFuture
     else:
       self.CP.vFuture = 0
+    if self.CC.vFutureA >= 1:
+      self.CP.vFutureA = self.CC.vFutureA
+    else:
+      self.CP.vFutureA = 0
     self.CP.aqValue = self.CC.aq_value
     self.CP.aqValueRaw = self.CC.aq_value_raw
 
@@ -376,6 +380,11 @@ class CarInterface(CarInterfaceBase):
       events.add(EventName.modeChangeOneway)
     elif self.CC.mode_change_timer and self.CS.out.cruiseState.modeSel == 5:
       events.add(EventName.modeChangeMaponly)
+
+    if self.CC.lkas_temp_disabled:
+      events.add(EventName.lkasDisabled)
+    elif self.CC.lkas_temp_disabled_timer:
+      events.add(EventName.lkasEnabled)
 
   # handle button presses
     for b in ret.buttonEvents:
@@ -405,6 +414,6 @@ class CarInterface(CarInterfaceBase):
     ret = self.CC.update(c, c.enabled, self.CS, self.frame, c.actuators,
                          c.cruiseControl.cancel, hud_control.visualAlert, hud_control.leftLaneVisible,
                          hud_control.rightLaneVisible, hud_control.leftLaneDepart, hud_control.rightLaneDepart,
-                         hud_control.setSpeed, hud_control.leadVisible, hud_control.vFuture)
+                         hud_control.setSpeed, hud_control.leadVisible, hud_control.vFuture, hud_control.vFutureA)
     self.frame += 1
     return ret

@@ -147,6 +147,7 @@ struct CarEvent @0x9b1657f34caf3ad3 {
     curvSpeedDown @124;
     standstillResButton @125;
     routineDriveOn @126;
+    lkasEnabled @127;
   }
 }
 
@@ -406,6 +407,7 @@ struct CarControl {
     rightLaneDepart @8: Bool;
     leftLaneDepart @9: Bool;
     vFuture @10:Float32;
+    vFutureA @11:Float32;
 
     enum VisualAlert {
       # these are the choices from the Honda
@@ -537,7 +539,7 @@ struct CarParams {
   vFuture @79: Float32;
   aqValue @80: Float32;
   aqValueRaw @81: Float32;
-  torqueMaxSpeed @83: Float32;
+  vFutureA @83: Float32;
 
   struct LateralParams {
     torqueBP @0 :List(Int32);
@@ -547,6 +549,8 @@ struct CarParams {
   struct LateralATOMTuning {
     lqr @0 :LateralLQRTuning;
     torque @1 :LateralTorqueTuning;
+    indi @2 :LateralINDITuning;
+    pid @3 :LateralPIDTuning;
   }
 
   struct LateralPIDTuning {
