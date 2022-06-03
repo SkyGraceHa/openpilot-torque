@@ -104,6 +104,7 @@ def manager_init() -> None:
     ("LongLogDisplay", "0"),
     ("OpkrBlindSpotDetect", "1"),
     ("OpkrMaxAngleLimit", "90"),
+    ("OpkrMaxSteerAngle", "90"),
     ("OpkrSpeedLimitOffset", "0"),
     ("OpkrLiveSteerRatio", "1"),
     ("OpkrVariableSteerMax", "0"),
@@ -216,6 +217,7 @@ def manager_init() -> None:
     ("MultipleLateralSpd", "30,80"),
     ("MultipleLateralOpA", "0,2,3"),
     ("MultipleLateralAng", "10,30"),
+    ("StoppingDist", "35"),
    ]
   if not PC:
     default_params.append(("LastUpdateTime", datetime.datetime.utcnow().isoformat().encode('utf8')))

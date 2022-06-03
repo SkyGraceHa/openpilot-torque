@@ -1033,20 +1033,7 @@ private:
   void refresh();
 };
 
-class MaxAngleLimit : public AbstractControl {
-  Q_OBJECT
 
-public:
-  MaxAngleLimit();
-
-private:
-  QPushButton btnplus;
-  QPushButton btnminus;
-  QLabel label;
-  Params params;
-  
-  void refresh();
-};
 
 class SpeedLimitOffset : public AbstractControl {
   Q_OBJECT
@@ -2378,4 +2365,19 @@ private:
   void refresh3();
   void refreshl();
   void refreshr();
+};
+
+class StoppingDist : public AbstractControl {
+  Q_OBJECT
+
+public:
+  StoppingDist();
+
+private:
+  QPushButton btnplus;
+  QPushButton btnminus;
+  QLabel label;
+  Params params;
+  
+  void refresh();
 };
