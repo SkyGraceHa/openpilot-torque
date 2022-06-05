@@ -52,6 +52,7 @@ def process_hud_alert(enabled, fingerprint, visual_alert, left_lane,
 
 class CarController():
   def __init__(self, dbc_name, CP, VM):
+    self.CP = CP
     self.p = CarControllerParams(CP)
     self.packer = CANPacker(dbc_name)
     self.angle_limit_counter = 0
@@ -219,13 +220,13 @@ class CarController():
 
 
   def smooth_steer( self, apply_torque, CS ):
-    if abs(CS.out.steeringAngleDeg) > self.CP.maxSteeringAngleDeg:
-      if CS.out.steeringPressed:
-        self.steer_timer_apply_torque -= 0.002 #self.DT_STEER   # 0.01 1sec, 0.005  2sec   0.002  5sec
-      else:
-        self.steer_timer_apply_torque -= 0.001  # 10 sec
-    elif CS.out.steeringPressed:
-      self.steer_timer_apply_torque -= 0.001
+    if self.CP.smoothSteer.maxSteeringAngle and abs(CS.out.steeringAngleDeg) > self.CP.smoothSteer.maxSteeringAngle:
+      if self.CP.smoothSteer.maxDriverAngleWait and CS.out.steeringPressed:
+        self.steer_timer_apply_torque -= self.CP.smoothSteer.maxDriverAngleWait # 0.002 #self.DT_STEER   # 0.01 1sec, 0.005  2sec   0.002  5sec
+      elif self.CP.smoothSteer.maxSteerAngleWait:
+        self.steer_timer_apply_torque -= self.CP.smoothSteer.maxSteerAngleWait # 0.001  # 10 sec
+    elif self.CP.smoothSteer.driverAngleWait and CS.out.steeringPressed:
+      self.steer_timer_apply_torque -= self.CP.smoothSteer.driverAngleWait #0.001
     else:
       if self.steer_timer_apply_torque >= 1:
           return int(round(float(apply_torque)))
@@ -280,7 +281,10 @@ class CarController():
     self.p.STEER_DELTA_DOWN = self.steerDeltaDown
 
     # Steering Torque
-    if 0 <= self.driver_steering_torque_above_timer < 100:
+    if self.CP.smoothSteer.method == 1:
+      new_steer = actuators.steer * self.steerMax
+      new_steer = self.smooth_steer( new_steer, CS )
+    elif 0 <= self.driver_steering_torque_above_timer < 100:
       new_steer = int(round(actuators.steer * self.steerMax * (self.driver_steering_torque_above_timer / 100)))
     else:
       new_steer = int(round(actuators.steer * self.steerMax))
@@ -872,17 +876,14 @@ class CarController():
             elif aReqValue < 0.0 and CS.lead_distance < min(self.stoppingdist+1.5, 6.0) and accel >= aReqValue and lead_objspd <= 0 and self.stopping_dist_adj_enabled:
               if CS.lead_distance < self.stoppingdist:
                 accel = self.accel - (DT_CTRL * interp(CS.out.vEgo, [1.0, 4.0], [1.0, 3.0]))
-              elif abs(lead_objspd) > 1.0:
+              elif abs(lead_objspd) > 1.2:
                 accel = self.accel - (DT_CTRL * interp(CS.out.vEgo, [1.0, 4.0], [1.0, 3.0]))
-              elif abs(lead_objspd) <= 1.0:
+              elif abs(lead_objspd) <= 1.2:
                 accel = self.accel + DT_CTRL
             elif aReqValue < 0.0 and lead_objspd <= -15:
               accel = interp(abs(lead_objspd), [15.0, 30.0], [(accel + aReqValue)/2, min(accel, aReqValue)])
             elif aReqValue < 0.0 and self.stopping_dist_adj_enabled:
-              if CS.cruiseGapSet <= 2.0:
-                stock_weight = interp(CS.lead_distance, [6.0, 10.0, 18.0, 25.0, 32.0], [0.2+(0.02*(3.0-CS.cruiseGapSet)), 0.85+(0.01*(3.0-CS.cruiseGapSet)), 1.0, 0.4, 1.0])
-              else:
-                stock_weight = interp(CS.lead_distance, [6.0, 10.0, 18.0, 25.0, 32.0], [0.2, 0.85, 1.0, 0.4, 1.0])
+              stock_weight = interp(CS.lead_distance, [6.0, 10.0, 18.0, 25.0, 32.0], [0.2, 0.85, 1.0, 0.4, 1.0])
               accel = accel * (1.0 - stock_weight) + aReqValue * stock_weight
             elif aReqValue < 0.0:
               stock_weight = interp(CS.lead_distance, [6.0, 10.0, 18.0, 25.0, 32.0], [1.0, 0.85, 1.0, 0.4, 1.0])
